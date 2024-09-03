@@ -30,8 +30,7 @@ final readonly class StaticGenerateCommand
         private StaticPageConfig $staticPageConfig,
         private Router $router,
         private ViewRenderer $viewRenderer,
-    ) {
-    }
+    ) {}
 
     #[ConsoleCommand(
         name: 'static:generate'
@@ -51,11 +50,11 @@ final readonly class StaticGenerateCommand
 
                 $uri = uri($staticPage->handler, ...$params);
 
-                $fileName = $uri === '/'
-                    ? 'index.html'
-                    : $uri . '.html';
+                if ($uri === '/') {
+                    $uri = 'index';
+                }
 
-                $file = path($publicPath, $fileName);
+                $file = path($publicPath, $uri . '.html');
 
                 $response = $this->router->dispatch(
                     new GenericRequest(
