@@ -45,15 +45,23 @@ final readonly class StaticGenerateCommand
             $dataProvider = $this->container->get($staticPage->dataProviderClass ?? GenericDataProvider::class);
 
             foreach ($dataProvider->provide() as $params) {
+                if (! is_array($params)) {
+                    $params = [$params];
+                }
+
                 $uri = uri($staticPage->handler, ...$params);
 
-                $file = path($publicPath, $uri . '.html');
+                $fileName = $uri === '/'
+                    ? 'index.html'
+                    : $uri . '.html';
+
+                $file = path($publicPath, $fileName);
 
                 $response = $this->router->dispatch(
                     new GenericRequest(
                         method: Method::GET,
                         uri: $uri,
-                    )
+                    ),
                 );
 
                 if ($response->getStatus() !== Status::OK) {
