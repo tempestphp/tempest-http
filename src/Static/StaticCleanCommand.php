@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Tempest\Http\Static;
 
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use SplFileInfo;
 use Tempest\Console\Console;
 use Tempest\Console\ConsoleCommand;
 use Tempest\Console\HasConsole;
-use Tempest\Console\Middleware\CautionMiddleware;
-use Tempest\Console\Middleware\ForceMiddleware;
+use Tempest\Container\Container;
 use Tempest\Core\Kernel;
+use Tempest\Http\DataProvider;
+use function Tempest\path;
+use function Tempest\uri;
 
 final readonly class StaticCleanCommand
 {
@@ -21,33 +20,35 @@ final readonly class StaticCleanCommand
     public function __construct(
         private Console $console,
         private Kernel $kernel,
+        private Container $container,
+        private StaticPageConfig $staticPageConfig,
     ) {
     }
 
     #[ConsoleCommand(
-        name: 'static:clean',
-        middleware: [ForceMiddleware::class, CautionMiddleware::class]
+        name: 'static:clean'
     )]
     public function __invoke(): void
     {
-        /** @var SplFileInfo[] $files */
-        $files = [];
+        $publicPath = path($this->kernel->root, 'public');
 
-        $directoryIterator = new RecursiveDirectoryIterator($this->kernel->root . '/public');
+        foreach ($this->staticPageConfig->staticPages as $staticPage) {
+            /** @var DataProvider $dataProvider */
+            $dataProvider = $this->container->get($staticPage->dataProviderClass ?? GenericDataProvider::class);
 
-        /** @var SplFileInfo $file */
-        foreach (new RecursiveIteratorIterator($directoryIterator) as $file) {
-            if ($file->getExtension() === 'html') {
-                $files[] = $file;
+            foreach ($dataProvider->provide() as $params) {
+                $uri = uri($staticPage->handler, ...$params);
+
+                $file = path($publicPath, $uri . '.html');
+
+                if (! file_exists($file)) {
+                    continue;
+                }
+
+                unlink($file);
+
+                $this->writeln("- <u>{$file}</u> removed");
             }
-        }
-
-        foreach ($files as $file) {
-            unlink($file->getPathname());
-
-            $pathName = str_replace('\\', '/', $file->getPathname());
-
-            $this->writeln("- <u>{$pathName}</u> removed");
         }
 
         $this->success('Done');

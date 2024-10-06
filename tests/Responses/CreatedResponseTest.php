@@ -10,6 +10,7 @@ use Tempest\Http\Status;
 
 /**
  * @internal
+ * @small
  */
 final class CreatedResponseTest extends TestCase
 {
