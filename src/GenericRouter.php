@@ -6,7 +6,9 @@ namespace Tempest\Http;
 
 use Closure;
 use Psr\Http\Message\ServerRequestInterface as PsrRequest;
+use ReflectionException;
 use Tempest\Container\Container;
+use Tempest\Core\AppConfig;
 use Tempest\Http\Exceptions\ControllerActionHasNoReturn;
 use Tempest\Http\Exceptions\InvalidRouteException;
 use Tempest\Http\Exceptions\MissingControllerOutputException;
@@ -32,6 +34,7 @@ final class GenericRouter implements Router
     public function __construct(
         private readonly Container $container,
         private readonly RouteConfig $routeConfig,
+        private readonly AppConfig $appConfig,
     ) {
     }
 
@@ -118,23 +121,27 @@ final class GenericRouter implements Router
 
     public function toUri(array|string $action, ...$params): string
     {
-        if (is_array($action)) {
-            $controllerClass = $action[0];
-            $reflection = new ClassReflector($controllerClass);
-            $controllerMethod = $reflection->getMethod($action[1]);
-        } else {
-            $controllerClass = $action;
-            $reflection = new ClassReflector($controllerClass);
-            $controllerMethod = $reflection->getMethod('__invoke');
+        try {
+            if (is_array($action)) {
+                $controllerClass = $action[0];
+                $reflection = new ClassReflector($controllerClass);
+                $controllerMethod = $reflection->getMethod($action[1]);
+            } else {
+                $controllerClass = $action;
+                $reflection = new ClassReflector($controllerClass);
+                $controllerMethod = $reflection->getMethod('__invoke');
+            }
+
+            $routeAttribute = $controllerMethod->getAttribute(Route::class);
+
+            $uri = $routeAttribute->uri;
+        } catch (ReflectionException) {
+            if (is_array($action)) {
+                throw new InvalidRouteException($action[0], $action[1]);
+            }
+
+            $uri = $action;
         }
-
-        $routeAttribute = $controllerMethod->getAttribute(Route::class);
-
-        if ($routeAttribute === null) {
-            throw new InvalidRouteException($controllerClass, $controllerMethod->getName());
-        }
-
-        $uri = $routeAttribute->uri;
 
         $queryParams = [];
 
@@ -148,6 +155,7 @@ final class GenericRouter implements Router
             $uri = str_replace('{' . $key . '}', "{$value}", $uri);
         }
 
+        $uri = rtrim($this->appConfig->baseUri, '/') . $uri;
 
         if ($queryParams !== []) {
             return $uri . '?' . http_build_query($queryParams);
