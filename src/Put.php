@@ -7,7 +7,7 @@ namespace Tempest\Http;
 use Attribute;
 
 #[Attribute(Attribute::IS_REPEATABLE | Attribute::TARGET_METHOD)]
-final class Get extends Route
+final class Put extends Route
 {
     public function __construct(
         string $uri,
@@ -20,7 +20,7 @@ final class Get extends Route
     ) {
         parent::__construct(
             uri: $uri,
-            method: Method::GET,
+            method: Method::PUT,
             middleware: $middleware,
         );
     }

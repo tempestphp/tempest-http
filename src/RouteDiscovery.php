@@ -4,56 +4,42 @@ declare(strict_types=1);
 
 namespace Tempest\Http;
 
-use Tempest\Container\Container;
 use Tempest\Core\Discovery;
+use Tempest\Core\DiscoveryLocation;
+use Tempest\Core\IsDiscovery;
+use Tempest\Http\Routing\Construction\RouteConfigurator;
 use Tempest\Reflection\ClassReflector;
-use Tempest\Support\VarExport\VarExportPhpFile;
 
-final readonly class RouteDiscovery implements Discovery
+final class RouteDiscovery implements Discovery
 {
-    private const string CACHE_PATH = __DIR__ . '/../../../../.cache/tempest/route-discovery.cache.php';
+    use IsDiscovery;
 
-    /** @var VarExportPhpFile<RouteConfig> */
-    private VarExportPhpFile $routeCacheFile;
-
-    public function __construct(private RouteConfig $routeConfig)
-    {
-        $this->routeCacheFile = new VarExportPhpFile(self::CACHE_PATH);
+    public function __construct(
+        private readonly RouteConfigurator $configurator,
+        private readonly RouteConfig $routeConfig,
+    ) {
     }
 
-    public function discover(ClassReflector $class): void
+    public function discover(DiscoveryLocation $location, ClassReflector $class): void
     {
         foreach ($class->getPublicMethods() as $method) {
-            $routeAttribute = $method->getAttribute(Route::class);
+            $routeAttributes = $method->getAttributes(Route::class);
 
-            if (! $routeAttribute) {
-                continue;
+            foreach ($routeAttributes as $routeAttribute) {
+                $this->discoveryItems->add($location, [$method, $routeAttribute]);
             }
-
-            $this->routeConfig->addRoute($method, $routeAttribute);
         }
     }
 
-    public function hasCache(): bool
+    public function apply(): void
     {
-        return $this->routeCacheFile->exists();
-    }
+        foreach ($this->discoveryItems as [$method, $routeAttribute]) {
+            $routeAttribute->setHandler($method);
+            $this->configurator->addRoute($routeAttribute);
+        }
 
-    public function storeCache(): void
-    {
-        $this->routeCacheFile->export($this->routeConfig);
-    }
-
-    public function restoreCache(Container $container): void
-    {
-        $cachedRouteConfig = $this->routeCacheFile->import();
-        $this->routeConfig->staticRoutes = $cachedRouteConfig->staticRoutes;
-        $this->routeConfig->dynamicRoutes = $cachedRouteConfig->dynamicRoutes;
-        $this->routeConfig->matchingRegexes = $cachedRouteConfig->matchingRegexes;
-    }
-
-    public function destroyCache(): void
-    {
-        $this->routeCacheFile->destroy();
+        if ($this->configurator->isDirty()) {
+            $this->routeConfig->apply($this->configurator->toRouteConfig());
+        }
     }
 }
