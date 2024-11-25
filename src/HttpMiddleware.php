@@ -6,5 +6,5 @@ namespace Tempest\Http;
 
 interface HttpMiddleware
 {
-    public function __invoke(Request $request, HttpMiddlewareCallable $next): Response;
+    public function __invoke(Request $request, callable $next): Response;
 }

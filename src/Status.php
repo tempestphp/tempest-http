@@ -109,7 +109,6 @@ enum Status: int
             303 => 'See Other',
             304 => 'Not Modified',
             305 => 'Use Proxy',
-            306 => 'Unused',
             307 => 'Temporary Redirect',
             308 => 'Permanent Redirect',
 
@@ -131,7 +130,6 @@ enum Status: int
             415 => 'Unsupported Media Type',
             416 => 'Range Not Satisfiable',
             417 => 'Expectation Failed',
-            418 => 'I Am A Teapot',
             421 => 'Misdirected Request',
             422 => 'Unprocessable Content',
             423 => 'Locked',
@@ -159,7 +157,7 @@ enum Status: int
 
     public function isInformational(): bool
     {
-        return $this->value < 200;
+        return $this->value >= 100 && $this->value < 200;
     }
 
     public function isSuccessful(): bool
@@ -179,6 +177,6 @@ enum Status: int
 
     public function isServerError(): bool
     {
-        return $this->value >= 500;
+        return $this->value >= 500 && $this->value < 600;
     }
 }

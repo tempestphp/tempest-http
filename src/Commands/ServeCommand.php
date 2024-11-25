@@ -12,9 +12,8 @@ final readonly class ServeCommand
         name: 'serve',
         description: 'Start a PHP development server'
     )]
-    public function __invoke(string $host = 'localhost', int $port = 8000, string $publicDir = 'public/'): void
+    public function __invoke(string $host = 'localhost:8000', string $publicDir = 'public/'): void
     {
-        $routerFile = __DIR__ . '/router.php';
-        passthru("php -S {$host}:{$port} -t {$publicDir} {$routerFile}");
+        passthru("php -S {$host} -t {$publicDir}");
     }
 }

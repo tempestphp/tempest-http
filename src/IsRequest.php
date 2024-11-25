@@ -27,7 +27,6 @@ trait IsRequest
     ) {
         $this->path ??= $this->resolvePath();
         $this->query ??= $this->resolveQuery();
-        $this->files ??= [];
     }
 
     public function get(string $key, mixed $default = null): mixed
@@ -125,24 +124,5 @@ trait IsRequest
         parse_str($queryString, $query);
 
         return $query;
-    }
-
-    public function has(string $key): bool
-    {
-        if ($this->hasBody($key)) {
-            return true;
-        }
-
-        return (bool) $this->hasQuery($key);
-    }
-
-    public function hasBody(string $key): bool
-    {
-        return array_key_exists($key, $this->body);
-    }
-
-    public function hasQuery(string $key): bool
-    {
-        return array_key_exists($key, $this->query);
     }
 }

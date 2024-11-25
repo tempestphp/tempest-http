@@ -6,10 +6,14 @@ namespace Tempest {
 
     use Tempest\Http\Router;
     use Tempest\Reflection\MethodReflector;
+    use Tempest\View\GenericView;
+    use Tempest\View\View;
 
-    /**
-     * Creates a valid URI to the given controller `$action`.
-     */
+    function view(string $path, mixed ...$params): View
+    {
+        return (new GenericView($path))->data(...$params);
+    }
+
     function uri(array|string|MethodReflector $action, ...$params): string
     {
         if ($action instanceof MethodReflector) {

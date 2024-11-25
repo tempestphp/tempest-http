@@ -1,8 +1,5 @@
 <?php
-
-use Tempest\Http\Exceptions\HttpProductionErrorHandler;
-
-/** @var HttpProductionErrorHandler $this */
+/** @var $this \Tempest\Http\Exceptions\HttpExceptionHandler */
 ?>
 
 <html>

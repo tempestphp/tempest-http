@@ -68,7 +68,7 @@ final readonly class FileSessionManager implements SessionManager
 
     private function getPath(SessionId $id): string
     {
-        return path($this->sessionConfig->path, (string)$id)->toString();
+        return path($this->sessionConfig->path, (string) $id);
     }
 
     private function resolve(SessionId $id): ?Session
@@ -76,11 +76,7 @@ final readonly class FileSessionManager implements SessionManager
         $path = $this->getPath($id);
 
         try {
-            if (! is_file($path)) {
-                return null;
-            }
-
-            $content = file_get_contents($path);
+            $content = @file_get_contents($path);
 
             return unserialize($content, ['allowed_classes' => true]);
         } catch (Throwable) {
@@ -129,7 +125,7 @@ final readonly class FileSessionManager implements SessionManager
 
     public function cleanup(): void
     {
-        $sessionFiles = glob(path($this->sessionConfig->path, '/*')->toString());
+        $sessionFiles = glob(path($this->sessionConfig->path, '/*'));
 
         foreach ($sessionFiles as $sessionFile) {
             $id = new SessionId(pathinfo($sessionFile, PATHINFO_FILENAME));
