@@ -8,7 +8,7 @@ use Tempest\Core\HasContext;
 /**
  * Represents an HTTP exception.
  */
-final class HttpException extends Exception implements HasContext
+final class HttpRequestFailed extends Exception implements HasContext
 {
     public function __construct(
         public readonly Status $status,
