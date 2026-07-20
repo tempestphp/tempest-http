@@ -6,6 +6,7 @@ namespace Tempest\Http\Tests;
 
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Tempest\Http\ContentType;
 use Tempest\Http\GenericRequest;
@@ -174,6 +175,21 @@ final class GenericRequestTest extends TestCase
 
         $this->assertTrue($request->accepts(ContentType::XHTML));
         $this->assertTrue($request->accepts(ContentType::XML));
+    }
+
+    #[Test]
+    #[TestWith(['example.com:443'])]
+    #[TestWith(['[::1]:443'])]
+    public function connect_requests_skip_uri_parsing(string $uri): void
+    {
+        $request = new GenericRequest(
+            method: Method::CONNECT,
+            uri: $uri,
+        );
+
+        $this->assertSame($uri, $request->uri);
+        $this->assertSame('', $request->path);
+        $this->assertSame([], $request->query);
     }
 
     #[Test]
