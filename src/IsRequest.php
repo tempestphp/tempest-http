@@ -6,6 +6,7 @@ namespace Tempest\Http;
 
 use Tempest\Http\Cookie\Cookie;
 use Tempest\Http\Session\Session;
+use Tempest\Support\Ip\IpAddress;
 use Tempest\Support\Uri\Uri;
 use Tempest\Validation\SkipValidation;
 
@@ -14,7 +15,11 @@ use function Tempest\Support\Arr\get_by_key;
 use function Tempest\Support\Arr\has_key;
 use function Tempest\Support\str;
 
-/** @phpstan-require-implements \Tempest\Http\Request */
+/**
+ * @phpstan-require-implements \Tempest\Http\Request
+ *
+ * @mago-expect lint:too-many-properties
+ */
 trait IsRequest
 {
     #[SkipValidation]
@@ -50,6 +55,9 @@ trait IsRequest
     #[SkipValidation]
     public array $cookies = [];
 
+    #[SkipValidation]
+    private(set) ?IpAddress $ip = null;
+
     public function __construct(
         Method $method,
         string $uri,
@@ -57,6 +65,7 @@ trait IsRequest
         array $headers = [],
         array $files = [],
         ?string $raw = null,
+        IpAddress|string|null $ip = null,
     ) {
         $this->method = $method;
         $this->uri = $uri;
@@ -64,6 +73,7 @@ trait IsRequest
         $this->headers = RequestHeaders::normalizeFromArray($headers);
         $this->files = $files;
         $this->raw = $raw;
+        $this->ip = IpAddress::tryFrom($ip);
 
         if ($this->method === Method::CONNECT) {
             $this->path ??= '';
